@@ -1,19 +1,8 @@
 # typing-transformer.nvim
 
-Insert-mode typing transformation rules for Neovim — inspired by the [Obsidian Typing Transformer plugin](https://github.com/aptend/typing-transformer-obsidian).
+Define insert-mode text transformations that run while you type.
 
-Define rules like `'"  |)" -> ")|"'` and the plugin will automatically transform text around your cursor as you type.
-
----
-
-## Features
-
-- Simple `"trigger" -> "result"` rule syntax with `|` as cursor marker
-- Global rules + per-filetype overrides
-- Priority: filetype-specific rules fire before global ones; first match wins
-- Zero dependencies — pure Lua
-
----
+A rule matches text around the cursor and replaces it immediately when the trigger is completed.
 
 ## Installation
 
@@ -21,103 +10,101 @@ Define rules like `'"  |)" -> ")|"'` and the plugin will automatically transform
 
 ```lua
 {
-  "quad/typing-transformer.nvim",
-  event = "InsertEnter",
+  "Delici0u-s/typing-transformer.nvim",
   opts = {
     global = {
       '"  |)"  -> ")|"',
-      '"  |]]" -> "]]|"',
-      '"  |**" -> "**|"',
-      '"  |*"  -> "*|"',
+      '"cosnt |" -> "const |"',
+      '" teh |" -> " the |"',
     },
     filetype = {
-      markdown = {
-        '"  |>" -> ">|"',
+      lua = {
+        '"!lfn|" -> "local function |"',
+        '"test|" -> "successful|"',
       },
     },
   },
 }
 ```
-
-### packer.nvim
-
-```lua
-use {
-  "quad/typing-transformer.nvim",
-  config = function()
-    require("typing-transformer").setup({
-      global = {
-        '"  |)"  -> ")|"',
-      },
-    })
-  end,
-}
-```
-
----
 
 ## Rule Syntax
 
-```
+```text
 '"<trigger>" -> "<result>"'
 ```
 
-`|` marks the cursor position in both trigger and result.
+`|` marks the cursor position.
 
-| Part | Meaning |
-|------|---------|
-| Left of `\|` in trigger | Text that must be immediately **before** the cursor |
-| Right of `\|` in trigger | Text that must be immediately **after** the cursor |
-| Left of `\|` in result | Replaces text that was left of cursor |
-| Right of `\|` in result | Either replaces or is skipped over (if already present) |
+### Trigger
 
-Escape `\|` for a literal pipe, `\\` for a literal backslash.
+Text before `|` must exist directly before the cursor.
 
-### Priority
+Text after `|` must exist directly after the cursor.
 
-1. Filetype-specific rules are checked before global rules
-2. Within a list, earlier rules have higher priority (first match wins)
-3. Put longer / more specific triggers first
+### Result
 
-### Examples
+Text before `|` replaces the matched text before the cursor.
 
-```lua
--- Double-space to jump past closing delimiters (your original use case)
-'"  |)"  -> ")|"'
-'"  |]]" -> "]]|"'
-'"  |**" -> "**|"'
-'"  |*"  -> "*|"'
+Text after `|` replaces existing text or moves past it when it already matches.
 
--- Auto-correct
-'"cosnt |" -> "const |"'
+### Escaping
 
--- Expand abbreviation
-'"brb|" -> "be right back|"'
-
--- Auto-pair and place cursor inside
-'"<|" -> "<|>"'
+```text
+\|   literal pipe
+\\   literal backslash
 ```
 
----
+## Priority
 
-## Configuration Reference
+1. Filetype rules are checked first.
+2. Rules are checked in order.
+3. The first matching rule wins.
+
+Put more specific rules before more general ones.
+
+## Examples
+
+### Fix common typos
+
+```lua
+'"cosnt |" -> "const |"'
+'"funciton |" -> "function |"'
+'"retrun |" -> "return |"'
+'"teh |" -> "the |"'
+```
+
+### Expand Lua snippets
+
+```lua
+'"local fn|" -> "local function |"'
+'"req|" -> "require(\"|\")"'
+```
+
+### Move past existing characters
+
+```lua
+'"  |)" -> ")|"'
+'"  |]" -> "]|"'
+'"  |}" -> "}|"'
+```
+
+## Configuration
 
 ```lua
 require("typing-transformer").setup({
-  -- Rules active in all buffers
-  global = {
-    -- list of rule strings
-  },
+  global = {},
 
-  -- Rules active only for a specific filetype (higher priority than global)
   filetype = {
-    lua = {
-      -- list of rule strings
-    },
-    markdown = {
-      -- list of rule strings
-    },
+    lua = {},
   },
 })
 ```
+
+## Rule summary
+1. `|` marks the cursor position in both the trigger and the result.
+2. Use `\|` for a literal pipe and `\\` for a literal backslash.
+3. Rules match text immediately around the cursor and transform it as you type.
+4. The matched text is replaced with the rule's result when the trigger completes.
+5. Filetype-specific rules are checked before global rules.
+6. Rules are evaluated top to bottom; the first match wins.
 

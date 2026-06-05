@@ -1,117 +1,97 @@
 *typing-transformer.txt*   Insert-mode typing rules for Neovim
 
-Author:   quad
+Author:   Delici0u-s
 License:  MIT
-Repo:     https://github.com/quad/typing-transformer.nvim
 
 ==============================================================================
-CONTENTS                                        *typing-transformer-contents*
+INTRODUCTION
 
-  1. Introduction .............. |typing-transformer-intro|
-  2. Setup ..................... |typing-transformer-setup|
-  3. Rule Syntax ............... |typing-transformer-rules|
-  4. Examples .................. |typing-transformer-examples|
-  5. Configuration Reference ... |typing-transformer-config|
+typing-transformer.nvim applies text transformations while you type.
 
-==============================================================================
-1. INTRODUCTION                                  *typing-transformer-intro*
-
-typing-transformer.nvim is a Neovim plugin inspired by the Obsidian plugin
-of the same name. It lets you define insert-mode transformation rules using
-a simple string syntax:
+Rules are defined as:
 
     '"trigger|" -> "result|"'
 
-When you type the last character of the trigger, the plugin checks whether
-the text around your cursor matches. If it does, the text is replaced with
-the result.
+When the trigger matches the text around the cursor, the plugin replaces it
+with the result.
 
 ==============================================================================
-2. SETUP                                         *typing-transformer-setup*
+SETUP
 
-With lazy.nvim: >lua
+With lazy.nvim:
 
   {
-    "quad/typing-transformer.nvim",
-    event = "InsertEnter",
+    "Delici0u-s/typing-transformer.nvim",
     opts = {
       global = {
-        '"  |)" -> ")|"',
-        '"  |*"  -> "*|"',
+        '"cosnt |" -> "const |"',
       },
       filetype = {
         lua = {
-          '"--  |" -> "-- |"',
-        },
-        markdown = {
-          '"  |>" -> ">|"',
+          '"lfn |" -> "local function |"',
+          '"test|" -> "successful|"',
         },
       },
     },
   }
 
 ==============================================================================
-3. RULE SYNTAX                                   *typing-transformer-rules*
-
-A rule is a Lua string with the format: >
+RULE SYNTAX
 
     '"<trigger>" -> "<result>"'
 
-Both trigger and result use `|` to mark the cursor position.
+`|` marks the cursor position.
 
-Trigger anatomy:
-  - Text to the LEFT of `|`  must appear immediately before the cursor.
-  - Text to the RIGHT of `|` must appear immediately after the cursor.
+Trigger:
 
-Result anatomy:
-  - Text to the LEFT of `|`  replaces what was left of cursor.
-  - Text to the RIGHT of `|` either replaces or is skipped over, depending
-    on whether it matches what was already to the right.
+  - Text left of `|` must be directly before the cursor.
+  - Text right of `|` must be directly after the cursor.
+
+Result:
+
+  - Text left of `|` replaces the matched text.
+  - Text right of `|` replaces existing text or skips over it when it
+    already matches.
 
 Escaping:
-  - `\|`  literal pipe character inside a rule
-  - `\\`  literal backslash
+
+  - `\|` literal pipe
+  - `\\` literal backslash
 
 Priority:
-  - Rules are matched in order (first match wins).
-  - Filetype-specific rules are checked BEFORE global rules.
-  - Longer / more specific triggers naturally win when listed first.
 
-Comments:
-  - A rule string starting with `#` is ignored (not yet supported in the
-    string list, but you can use Lua comments `--` around entries).
+  - Filetype rules are checked before global rules.
+  - Rules are checked in order.
+  - First match wins.
 
 ==============================================================================
-4. EXAMPLES                                      *typing-transformer-examples*
+EXAMPLES
 
-Double-space to jump past closing delimiters: >
+Fix common typos:
 
-    '"  |)"  -> ")|"'     -- <Space><Space> before ) → jump past )
-    '"  |]]" -> "]]|"'    -- same for ]] (normal-mode links etc.)
-    '"  |**" -> "**|"'    -- jump past bold markers
-    '"  |*"  -> "*|"'     -- jump past italic marker
+    '"cosnt |" -> "const |"'
+    '"funciton |" -> "function |"'
+    '"retrun |" -> "return |"'
 
-Auto-correct double dash to em-dash: >
+Lua-specific expansions:
 
-    '"---|" -> "—|"'
+    '"local fn|" -> "local function |"'
+    '"req|" -> "require(\"|\")"'
 
-Expand abbreviation: >
+Move past existing delimiters via double space:
 
-    '"brb|" -> "be right back|"'
-
-Auto-pair angle brackets and place cursor inside: >
-
-    '"<|" -> "<|>"'
+    '"  |)" -> ")|"'
+    '"  |]" -> "]|"'
+    '"  |}" -> "}|"'
 
 ==============================================================================
-5. CONFIGURATION REFERENCE                       *typing-transformer-config*
+CONFIGURATION
 
-`global`  (string[])
-    Rules applied in every buffer, regardless of filetype.
+global (string[])
 
-`filetype`  (table<string, string[]>)
-    Keys are Neovim filetype names (e.g. `"lua"`, `"markdown"`).
-    Rules listed here take priority over global rules for that filetype.
+    Rules available in every buffer.
 
-==============================================================================
-vim:tw=78:ts=8:ft=help:norl:
+filetype (table<string, string[]>)
+
+    Rules applied only to matching filetypes. These rules take precedence
+    over global rules.
